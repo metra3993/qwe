@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}Оформление заказа - FreshMarket{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">📦 Оформление заказа</h1>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+            <!-- Левая колонка: адрес, оплата, комментарий -->
+            <div>
+                <!-- Адрес доставки -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="mb-3">📍 Адрес доставки</h3>
+
+                        {% if addresses %}
+                            <div class="addresses-list">
+                                {% for address in addresses %}
+                                    <label class="address-card {% if address.is_default %}address-default{% endif %}">
+                                        <input type="radio" name="address_id" value="{{ address.id }}" {% if address.is_default %}checked{% endif %} required>
+                                        <div class="address-content">
+                                            <div class="address-header">
+                                                <strong>{{ address.name }}</strong>
+                                                {% if address.is_default %}
+                                                    <span class="badge-default">По умолчанию</span>
+                                                {% endif %}
+                                            </div>
+                                            <p class="text-secondary text-sm" style="margin: 4px 0 0 0;">
+                                                {{ address.get_full_address }}
+                                            </p>
+                                            {% if address.comment %}
+                                                <p class="text-sm" style="margin: 4px 0 0 0; color: var(--color-accent);">
+                                                    💬 {{ address.comment }}
+                                                </p>
+                                            {% endif %}
+                                        </div>
+                                    </label>
+                                {% endfor %}
+                            </div>
+
+                            <a href="{% url 'accounts:profile' %}" class="btn btn-sm mt-3">+ Добавить новый адрес</a>
+                        {% else %}
+                            <div class="empty-addresses">
+                                <p class="text-secondary mb-3">У вас ещё нет сохраненных адресов</p>
+                                <a href="{% url 'accounts:profile' %}" class="btn btn-primary">Добавить адрес</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Способ оплаты -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="mb-3">💳 Способ оплаты</h3>
+
+                        <div class="payment-methods">
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="cash" checked>
+                                <div class="payment-content">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"/>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                    </svg>
+                                    <div>
+                                        <strong>Наличными при получении</strong>
+                                        <p class="text-sm text-secondary">Оплата курьеру</p>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="card">
+                                <div class="payment-content">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                        <line x1="1" y1="10" x2="23" y2="10"/>
+                                    </svg>
+                                    <div>
+                                        <strong>Картой при получении</strong>
+                                        <p class="text-sm text-secondary">Терминал у курьера</p>
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label class="payment-card">
+                                <input type="radio" name="payment_method" value="online">
+                                <div class="payment-content">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 16v-4M12 8h.01"/>
+                                    </svg>
+                                    <div>
+                                        <strong>Онлайн оплата</strong>
+                                        <p class="text-sm text-secondary">Скоро будет доступна</p>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Время доставки -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="mb-3">🕐 Время доставки</h3>
+
+                        <div class="form-group">
+                            <label class="form-label">Выберите удобное время</label>
+                            <select name="delivery_time" class="form-control">
+                                <option value="Сегодня с 18:00 до 22:00">Сегодня с 18:00 до 22:00</option>
+                                <option value="Завтра с 10:00 до 14:00">Завтра с 10:00 до 14:00</option>
+                                <option value="Завтра с 14:00 до 18:00">Завтра с 14:00 до 18:00</option>
+                                <option value="Завтра с 18:00 до 22:00">Завтра с 18:00 до 22:00</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Комментарий к заказу -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="mb-3">💬 Комментарий к заказу</h3>
+                        <textarea name="comment" class="form-control" rows="3" placeholder="Например: позвоните за 30 минут до доставки"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка: итоги заказа -->
+            <div>
+                <div class="card" style="position: sticky; top: 80px;">
+                    <div class="card-body">
+                        <h3 class="mb-4">Ваш заказ</h3>
+
+                        <!-- Товары -->
+                        <div class="order-items">
+                            {% for item in cart_items %}
+                                <div class="order-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div style="flex: 1;">
+                                            <p style="margin: 0; font-size: 14px;">{{ item.product.name }}</p>
+                                            <p class="text-sm text-secondary" style="margin: 2px 0 0 0;">
+                                                {{ item.quantity }} × {{ item.product.price|floatformat:0 }} ₽
+                                            </p>
+                                        </div>
+                                        <strong style="font-size: 14px;">{{ item.total_price|floatformat:0 }} ₽</strong>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="order-summary-divider"></div>
+
+                        <!-- Итого -->
+                        <div class="order-summary">
+                            <div class="summary-row">
+                                <span class="text-secondary">Товары ({{ cart.total_items }} шт):</span>
+                                <strong>{{ cart.total_price|floatformat:0 }} ₽</strong>
+                            </div>
+                            <div class="summary-row">
+                                <span class="text-secondary">Доставка:</span>
+                                <strong>{{ delivery_price }} ₽</strong>
+                            </div>
+                            <div class="summary-divider"></div>
+                            <div class="summary-row summary-total">
+                                <span style="font-size: 18px; font-weight: 600;">Итого:</span>
+                                <span style="font-size: 24px; font-weight: 600; color: var(--color-accent);">{{ total_with_delivery|floatformat:0 }} ₽</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block mb-2" style="margin-top: 20px;">Оформить заказ</button>
+                        <a href="{% url 'orders:cart' %}" class="btn btn-block">Вернуться в корзину</a>
+
+                        <!-- Примечание -->
+                        <div class="checkout-note">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            <span class="text-sm">Нажимая кнопку, вы подтверждаете заказ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Addresses */
+.addresses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.address-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.address-card:hover {
+    border-color: var(--color-accent);
+    background: var(--color-hover);
+}
+
+.address-card input[type="radio"] {
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.address-card input[type="radio"]:checked ~ .address-content {
+    color: var(--color-primary);
+}
+
+.address-card:has(input[type="radio"]:checked) {
+    border-color: var(--color-accent);
+    background: var(--color-hover);
+}
+
+.address-content {
+    flex: 1;
+}
+
+.address-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.badge-default {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 12px;
+}
+
+.empty-addresses {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+/* Payment Methods */
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.payment-card:hover {
+    border-color: var(--color-accent);
+    background: var(--color-hover);
+}
+
+.payment-card:has(input[type="radio"]:checked) {
+    border-color: var(--color-accent);
+    background: var(--color-hover);
+}
+
+.payment-card input[type="radio"] {
+    cursor: pointer;
+}
+
+.payment-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.payment-content svg {
+    stroke: var(--color-accent);
+}
+
+/* Order Items */
+.order-items {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.order-item {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-summary-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 16px 0;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.summary-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 16px 0;
+}
+
+.summary-total {
+    margin-top: 8px;
+}
+
+.checkout-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}

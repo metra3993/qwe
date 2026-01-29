@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Пользователи - Панель управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Управление пользователями</h1>
+
+    {% if users %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Имя пользователя</th>
+                        <th>Email</th>
+                        <th>Роль</th>
+                        <th>Заказов</th>
+                        <th>Дата регистрации</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_item in users %}
+                        <tr>
+                            <td>{{ user_item.pk }}</td>
+                            <td><strong>{{ user_item.username }}</strong></td>
+                            <td class="text-sm">{{ user_item.email }}</td>
+                            <td>{{ user_item.get_role_display }}</td>
+                            <td>{{ user_item.orders_count }}</td>
+                            <td class="text-sm">{{ user_item.date_joined|date:"d.m.Y" }}</td>
+                            <td>
+                                {% if user_item.is_active %}
+                                    <span style="color: green;">Активен</span>
+                                {% else %}
+                                    <span style="color: red;">Заблокирован</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                <a href="{% url 'dashboard:user_edit' user_item.pk %}" class="btn btn-sm">Изменить</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-secondary">Нет пользователей</p>
+    {% endif %}
+</div>
+{% endblock %}

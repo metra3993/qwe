@@ -1,0 +1,7 @@
+Django==5.2.7
+psycopg2-binary==2.9.9
+Pillow==10.1.0
+
+  - admin@freshmarket.ru / admin123
+  - manager@freshmarket.ru / manager123
+  - client@example.com / client123

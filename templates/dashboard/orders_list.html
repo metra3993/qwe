@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказы - Панель управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Управление заказами</h1>
+
+    <!-- Фильтры -->
+    <div class="mb-4">
+        <form method="get" class="filter-group">
+            <select name="status" class="form-control" style="max-width: 200px;">
+                <option value="">Все статусы</option>
+                <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Ожидает обработки</option>
+                <option value="processing" {% if current_status == 'processing' %}selected{% endif %}>В обработке</option>
+                <option value="confirmed" {% if current_status == 'confirmed' %}selected{% endif %}>Подтвержден</option>
+                <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Завершен</option>
+                <option value="cancelled" {% if current_status == 'cancelled' %}selected{% endif %}>Отменен</option>
+            </select>
+
+            <button type="submit" class="btn btn-primary">Применить</button>
+            <a href="{% url 'dashboard:orders_list' %}" class="btn">Сбросить</a>
+        </form>
+    </div>
+
+    <!-- Таблица заказов -->
+    {% if orders %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Клиент</th>
+                        <th>Автомобиль</th>
+                        <th>Контакты</th>
+                        <th>Дата</th>
+                        <th>Цена</th>
+                        <th>Статус</th>
+                        <th>Менеджер</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                        <tr>
+                            <td>#{{ order.pk }}</td>
+                            <td>{{ order.user.username }}</td>
+                            <td>
+                                <strong>{{ order.car.brand.name }} {{ order.car.model }}</strong><br>
+                                <span class="text-sm text-secondary">{{ order.car.year }} год</span>
+                            </td>
+                            <td class="text-sm">
+                                {{ order.full_name }}<br>
+                                {{ order.phone }}
+                            </td>
+                            <td class="text-sm">{{ order.created_at|date:"d.m.Y H:i" }}</td>
+                            <td><strong>{{ order.price|floatformat:0 }} ₽</strong></td>
+                            <td>
+                                <span style="padding: 4px 8px; border: 1px solid var(--color-border); font-size: 12px;">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="text-sm">
+                                {% if order.manager %}
+                                    {{ order.manager.username }}
+                                {% else %}
+                                    <span class="text-secondary">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                <a href="{% url 'dashboard:order_detail' order.pk %}" class="btn btn-sm">Открыть</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-secondary">Нет заказов</p>
+    {% endif %}
+</div>
+{% endblock %}

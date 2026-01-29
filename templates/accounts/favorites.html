@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Избранное - FreshMarket{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">🌿 Избранные продукты</h1>
+
+    {% if favorites %}
+        <div class="grid grid-4" id="favoritesGrid">
+            {% for favorite in favorites %}
+                <div class="card product-card" id="favorite-{{ favorite.product.pk }}" style="transition: opacity 0.3s ease; border-radius: 12px; overflow: hidden;">
+                    {% if favorite.product.main_image %}
+                        <img src="{{ favorite.product.main_image.image.url }}" alt="{{ favorite.product.name }}" class="card-image">
+                    {% else %}
+                        <div class="card-image" style="background: linear-gradient(135deg, #f0f7ed 0%, #e0f0db 100%); display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 48px;">🛒</span>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body">
+                        <h3 class="card-title">{{ favorite.product.name }}</h3>
+                        <p class="text-secondary mb-2 text-sm">
+                            {{ favorite.product.quantity|floatformat:0 }} {{ favorite.product.get_unit_display }}
+                            {% if favorite.product.brand %} • {{ favorite.product.brand }}{% endif %}
+                        </p>
+
+                        <div class="mb-3">
+                            {% if favorite.product.discount_percent > 0 %}
+                                <p class="old-price" style="text-decoration: line-through; color: var(--color-secondary); font-size: 14px; margin: 0;">{{ favorite.product.price|floatformat:0 }} ₽</p>
+                                <p class="card-price">{{ favorite.product.final_price|floatformat:0 }} ₽</p>
+                            {% else %}
+                                <p class="card-price">{{ favorite.product.price|floatformat:0 }} ₽</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'products:detail' favorite.product.pk %}" class="btn btn-primary" style="flex: 1;">Подробнее</a>
+                            <button type="button" class="btn btn-sm" onclick="removeFavorite({{ favorite.product.pk }})">Удалить</button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div style="font-size: 64px; margin-bottom: 24px;">💚</div>
+            <h2>У вас пока нет избранных продуктов</h2>
+            <p class="text-secondary mb-3">Добавляйте понравившиеся товары в избранное</p>
+            <a href="{% url 'products:catalog' %}" class="btn btn-primary">Перейти в каталог</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.product-card {
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(82, 160, 47, 0.15);
+}
+
+.old-price {
+    margin-bottom: 4px;
+}
+</style>
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function removeFavorite(carId) {
+    const csrftoken = getCookie('csrftoken');
+    const card = document.getElementById(`favorite-${carId}`);
+
+    fetch(`/accounts/toggle-favorite/${carId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Плавно скрываем карточку
+            card.style.opacity = '0';
+
+            // Удаляем элемент после анимации
+            setTimeout(() => {
+                card.remove();
+
+                // Проверяем, остались ли карточки
+                const grid = document.getElementById('favoritesGrid');
+                if (grid && grid.children.length === 0) {
+                    grid.remove();
+                    // Показываем сообщение о пустом списке
+                    const container = document.querySelector('.container.py-5');
+                    container.innerHTML = `
+                        <h1 class="mb-4">🌿 Избранные продукты</h1>
+                        <div class="text-center py-5">
+                            <div style="font-size: 64px; margin-bottom: 24px;">💚</div>
+                            <h2>У вас пока нет избранных продуктов</h2>
+                            <p class="text-secondary mb-3">Добавляйте понравившиеся товары в избранное</p>
+                            <a href="/" class="btn btn-primary">Перейти в каталог</a>
+                        </div>
+                    `;
+                }
+            }, 300);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}

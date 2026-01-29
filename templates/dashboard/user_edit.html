@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактирование пользователя - Панель управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-3">
+        <a href="{% url 'dashboard:users_list' %}" class="text-secondary">← Назад к списку пользователей</a>
+    </div>
+
+    <h1 class="mb-4">Редактирование пользователя: {{ edited_user.username }}</h1>
+
+    <div style="max-width: 600px;">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="username" class="form-label">Имя пользователя</label>
+                <input type="text" id="username" name="username" class="form-control" value="{{ edited_user.username }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ edited_user.email }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="first_name" class="form-label">Имя</label>
+                <input type="text" id="first_name" name="first_name" class="form-control" value="{{ edited_user.first_name }}">
+            </div>
+
+            <div class="form-group">
+                <label for="last_name" class="form-label">Фамилия</label>
+                <input type="text" id="last_name" name="last_name" class="form-control" value="{{ edited_user.last_name }}">
+            </div>
+
+            <div class="form-group">
+                <label for="phone" class="form-label">Телефон</label>
+                <input type="tel" id="phone" name="phone" class="form-control" value="{{ edited_user.phone|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="role" class="form-label">Роль</label>
+                <select name="role" id="role" class="form-control">
+                    <option value="client" {% if edited_user.role == 'client' %}selected{% endif %}>Клиент</option>
+                    <option value="manager" {% if edited_user.role == 'manager' %}selected{% endif %}>Менеджер</option>
+                    <option value="admin" {% if edited_user.role == 'admin' %}selected{% endif %}>Администратор</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" name="is_active" {% if edited_user.is_active %}checked{% endif %}>
+                    <span>Аккаунт активен</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

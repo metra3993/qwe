@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FreshMarket - Доставка свежих продуктов{% endblock %}</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a href="{% url 'products:catalog' %}" class="navbar-logo" style="color: var(--color-accent); font-weight: 600;">
+                    🌿 FreshMarket
+                </a>
+
+                <!-- Search -->
+                <div class="navbar-search">
+                    <form method="get" action="{% url 'products:catalog' %}" style="display: flex; width: 100%;">
+                        <input type="search" name="search" placeholder="Найти продукты..." class="search-input" value="{{ request.GET.search }}">
+                        <button type="submit" class="search-btn">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="8" cy="8" r="6"/>
+                                <path d="M12.5 12.5L17 17"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Icons -->
+                <ul class="navbar-menu">
+                    {% if user.is_authenticated %}
+                        {% if user.is_manager or user.is_admin_user %}
+                            <li>
+                                <a href="{% url 'dashboard:index' %}" class="icon-link" title="Панель управления">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="7" height="7"/>
+                                        <rect x="14" y="3" width="7" height="7"/>
+                                        <rect x="14" y="14" width="7" height="7"/>
+                                        <rect x="3" y="14" width="7" height="7"/>
+                                    </svg>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <li style="position: relative;">
+                            <a href="{% url 'orders:cart' %}" class="icon-link" title="Корзина">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="9" cy="21" r="1"/>
+                                    <circle cx="20" cy="21" r="1"/>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                </svg>
+                                {% if user.cart.total_items > 0 %}
+                                    <span class="cart-badge">{{ user.cart.total_items }}</span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% url 'accounts:favorites' %}" class="icon-link" title="Избранное">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                </svg>
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="{% url 'accounts:orders' %}" class="icon-link" title="Мои заказы">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                                    <line x1="3" y1="6" x2="21" y2="6"/>
+                                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                                </svg>
+                            </a>
+                        </li>
+
+                        <li class="user-menu">
+                            <button class="user-menu-btn icon-link" onclick="toggleUserMenu(event)" title="{{ user.get_full_name }}">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="8" r="4"/>
+                                    <path d="M4 20c0-4 3-7 8-7s8 3 8 7"/>
+                                </svg>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown">
+                                <div style="padding: 12px 16px; border-bottom: 1px solid var(--color-border);">
+                                    <strong>{{ user.get_full_name }}</strong>
+                                    <p class="text-sm text-secondary" style="margin: 4px 0 0 0;">{{ user.email }}</p>
+                                </div>
+                                <a href="{% url 'accounts:profile' %}">Личный кабинет</a>
+                                <a href="{% url 'accounts:logout' %}">Выход</a>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="user-menu">
+                            <button class="user-menu-btn icon-link" onclick="toggleUserMenu(event)" title="Войти">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="8" r="4"/>
+                                    <path d="M4 20c0-4 3-7 8-7s8 3 8 7"/>
+                                </svg>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown">
+                                <a href="{% url 'accounts:login' %}">Войти</a>
+                                <a href="{% url 'accounts:register' %}">Регистрация</a>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Сообщения -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Основной контент -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Подвал -->
+    <footer class="py-5" style="border-top: 2px solid var(--color-accent); margin-top: 64px; background: var(--color-hover);">
+        <div class="container">
+            <div class="text-center text-secondary text-sm">
+                <p style="margin-bottom: 8px;">🌿 FreshMarket - Свежие продукты с доставкой</p>
+                <p>&copy; 2024 FreshMarket. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleUserMenu(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+
+{% block title %}Личный кабинет - FreshMarket{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Шапка профиля -->
+    <div class="profile-header mb-4">
+        <h1 style="margin-bottom: 8px;">{{ user.get_full_name }}</h1>
+        <p class="text-secondary" style="margin-bottom: 4px;">{{ user.email }}</p>
+        {% if user.phone %}
+            <p class="text-secondary text-sm">{{ user.phone }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Статистика -->
+    <div class="grid grid-4 mb-5">
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-secondary mb-1">Всего заказов</p>
+                <h2 class="mb-0">{{ orders_count }}</h2>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-secondary mb-1">Завершенных</p>
+                <h2 class="mb-0">{{ completed_orders }}</h2>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-secondary mb-1">В ожидании</p>
+                <h2 class="mb-0">{{ pending_orders }}</h2>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-secondary mb-1">Избранных продуктов</p>
+                <h2 class="mb-0">{{ favorites_count }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Последние заказы -->
+    {% if recent_orders %}
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Последние заказы</h2>
+                <a href="{% url 'accounts:orders' %}" class="btn btn-sm">Все заказы</a>
+            </div>
+
+            <div class="grid grid-3">
+                {% for order in recent_orders %}
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title">Заказ #{{ order.pk }}</h3>
+                            <p class="text-secondary mb-2 text-sm">{{ order.items.count }} товар(ов)</p>
+                            <p class="card-price mb-2">{{ order.total_price|floatformat:0 }} ₽</p>
+                            <p class="text-sm mb-3">
+                                <span style="padding: 4px 8px; border: 1px solid var(--color-border); font-size: 12px; border-radius: 4px;">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </p>
+                            <p class="text-sm text-secondary">{{ order.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Избранные продукты -->
+    {% if recent_favorites %}
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Избранные продукты</h2>
+                <a href="{% url 'accounts:favorites' %}" class="btn btn-sm">Все избранные</a>
+            </div>
+
+            <div class="grid grid-4">
+                {% for favorite in recent_favorites %}
+                    <div class="card">
+                        {% if favorite.product.main_image %}
+                            <a href="{% url 'products:detail' favorite.product.pk %}">
+                                <img src="{{ favorite.product.main_image.image.url }}" alt="{{ favorite.product.name }}" class="card-image">
+                            </a>
+                        {% else %}
+                            <div class="card-image" style="background: var(--color-hover); display: flex; align-items: center; justify-content: center;">
+                                <span class="text-secondary" style="font-size: 48px;">{{ favorite.product.category.icon }}</span>
+                            </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <p class="text-sm text-secondary mb-1">{{ favorite.product.category.icon }} {{ favorite.product.category.name }}</p>
+                            <h3 class="card-title">{{ favorite.product.name }}</h3>
+                            <p class="card-price mb-3">{{ favorite.product.price|floatformat:0 }} ₽</p>
+                            <a href="{% url 'products:detail' favorite.product.pk %}" class="btn btn-block btn-sm">Подробнее</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Адреса доставки -->
+    <div class="card mb-5">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>📍 Мои адреса</h2>
+                <button class="btn btn-primary btn-sm" onclick="toggleAddressForm()">+ Добавить адрес</button>
+            </div>
+
+            <!-- Форма добавления адреса (скрыта по умолчанию) -->
+            <div id="addAddressForm" style="display: none;" class="mb-4">
+                <form method="post" action="{% url 'accounts:add_address' %}" style="padding: 20px; background: var(--color-hover); border-radius: 4px;">
+                    {% csrf_token %}
+                    <h3 class="mb-3">Новый адрес</h3>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="name" class="form-label">Название *</label>
+                            <input type="text" id="name" name="name" class="form-control" required placeholder="Дом, Работа...">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="street" class="form-label">Улица *</label>
+                            <input type="text" id="street" name="street" class="form-control" required placeholder="ул. Ленина">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="house" class="form-label">Дом *</label>
+                            <input type="text" id="house" name="house" class="form-control" required placeholder="12">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apartment" class="form-label">Квартира/Офис</label>
+                            <input type="text" id="apartment" name="apartment" class="form-control" placeholder="45">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="entrance" class="form-label">Подъезд</label>
+                            <input type="text" id="entrance" name="entrance" class="form-control" placeholder="2">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="floor" class="form-label">Этаж</label>
+                            <input type="text" id="floor" name="floor" class="form-control" placeholder="5">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comment" class="form-label">Комментарий</label>
+                        <textarea id="comment" name="comment" class="form-control" rows="2" placeholder="Например: домофон не работает"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="is_default">
+                            <span>Сделать адресом по умолчанию</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button type="submit" class="btn btn-primary">Сохранить адрес</button>
+                        <button type="button" class="btn" onclick="toggleAddressForm()">Отмена</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Список адресов -->
+            {% if addresses %}
+                <div class="addresses-grid">
+                    {% for address in addresses %}
+                        <div class="address-item {% if address.is_default %}address-default{% endif %}">
+                            <div class="address-item-header">
+                                <strong>{{ address.name }}</strong>
+                                {% if address.is_default %}
+                                    <span class="badge-default">По умолчанию</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-secondary text-sm" style="margin: 8px 0;">
+                                {{ address.get_full_address }}
+                            </p>
+                            {% if address.comment %}
+                                <p class="text-sm" style="margin: 4px 0; color: var(--color-accent);">
+                                    💬 {{ address.comment }}
+                                </p>
+                            {% endif %}
+                            <div class="address-actions">
+                                <form method="post" action="{% url 'accounts:delete_address' address.id %}" style="display: inline;" onsubmit="return confirm('Удалить этот адрес?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn-link text-sm" style="color: #ff6b6b;">Удалить</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <p class="text-secondary">У вас ещё нет сохраненных адресов</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Редактирование профиля -->
+    <div class="card">
+        <div class="card-body">
+            <h2 class="mb-4">Редактировать профиль</h2>
+
+            <form method="post" enctype="multipart/form-data" style="max-width: 800px;">
+                {% csrf_token %}
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="first_name" class="form-label">Имя</label>
+                        <input type="text" id="first_name" name="first_name" class="form-control" value="{{ user.first_name }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="last_name" class="form-label">Фамилия</label>
+                        <input type="text" id="last_name" name="last_name" class="form-control" value="{{ user.last_name }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone" class="form-label">Телефон</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" value="{{ user.phone|default:'' }}" placeholder="+7 (999) 123-45-67">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-header {
+    padding: 24px;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+}
+
+/* Addresses */
+.addresses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.address-item {
+    padding: 16px;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.address-item:hover {
+    border-color: var(--color-accent);
+    background: var(--color-hover);
+}
+
+.address-default {
+    border-color: var(--color-accent);
+    background: var(--color-hover);
+}
+
+.address-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.badge-default {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 12px;
+}
+
+.address-actions {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.btn-link:hover {
+    opacity: 0.8;
+}
+</style>
+
+<script>
+function toggleAddressForm() {
+    const form = document.getElementById('addAddressForm');
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

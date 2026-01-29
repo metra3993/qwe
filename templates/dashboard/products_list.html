@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+
+{% block title %}Продукты - Панель управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🛒 Управление продуктами</h1>
+        <a href="{% url 'dashboard:product_create' %}" class="btn btn-primary">+ Добавить продукт</a>
+    </div>
+
+    <!-- Фильтры и поиск -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="filters-form">
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                    <input type="text" name="search" placeholder="🔍 Поиск по названию, бренду..." class="filter-input" value="{{ search_query }}" style="flex: 1; min-width: 250px;">
+
+                    <select name="category" class="filter-select" style="min-width: 180px;">
+                        <option value="">Все категории</option>
+                        {% for category in categories %}
+                            <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
+                                {{ category.icon }} {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="available" class="filter-select" style="min-width: 150px;">
+                        <option value="">Все</option>
+                        <option value="1" {% if request.GET.available == '1' %}selected{% endif %}>В наличии</option>
+                        <option value="0" {% if request.GET.available == '0' %}selected{% endif %}>Нет в наличии</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-primary">Применить</button>
+
+                    {% if request.GET.search or request.GET.category or request.GET.available %}
+                        <a href="{% url 'dashboard:products_list' %}" class="btn">Сбросить</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Список продуктов -->
+    {% if products %}
+        <p class="text-secondary mb-3">Найдено продуктов: <strong>{{ products|length }}</strong></p>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Фото</th>
+                        <th>Продукт</th>
+                        <th>Категория</th>
+                        <th>Цена</th>
+                        <th>Остаток</th>
+                        <th>Статус</th>
+                        <th style="width: 220px; text-align: right;">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                        <tr>
+                            <td>
+                                {% if product.main_image %}
+                                    <img src="{{ product.main_image.image.url }}" alt="{{ product.name }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                {% else %}
+                                    <div style="width: 60px; height: 60px; background: var(--color-hover); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                        🛒
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                <p class="text-sm text-secondary mb-0">
+                                    {{ product.quantity|floatformat:0 }} {{ product.get_unit_display }}
+                                    {% if product.brand %} • {{ product.brand }}{% endif %}
+                                </p>
+                            </td>
+                            <td>
+                                <span class="text-sm">{{ product.category.icon }} {{ product.category.name }}</span>
+                            </td>
+                            <td>
+                                {% if product.discount_percent > 0 %}
+                                    <div>
+                                        <span style="text-decoration: line-through; color: var(--color-secondary); font-size: 12px;">{{ product.price|floatformat:0 }} ₽</span>
+                                        <strong style="color: var(--color-danger);">{{ product.final_price|floatformat:0 }} ₽</strong>
+                                        <span class="badge-sale" style="font-size: 11px; padding: 2px 6px; background: var(--color-danger); color: white; border-radius: 4px; margin-left: 4px;">-{{ product.discount_percent }}%</span>
+                                    </div>
+                                {% else %}
+                                    <strong>{{ product.price|floatformat:0 }} ₽</strong>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="{% if product.stock < 10 %}text-danger{% elif product.stock < 50 %}text-warning{% endif %}">
+                                    {{ product.stock }} шт
+                                </span>
+                            </td>
+                            <td>
+                                {% if product.is_available %}
+                                    <span class="status-badge status-available">В наличии</span>
+                                {% else %}
+                                    <span class="status-badge status-unavailable">Нет в наличии</span>
+                                {% endif %}
+
+                                {% if product.is_new %}
+                                    <span class="status-badge status-new">Новинка</span>
+                                {% endif %}
+
+                                {% if product.is_featured %}
+                                    <span class="status-badge status-featured">Рекомендуемый</span>
+                                {% endif %}
+
+                                {% if product.is_organic %}
+                                    <span class="status-badge status-organic">🌱 Эко</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{% url 'products:detail' product.pk %}" class="btn btn-sm" target="_blank" title="Посмотреть">👁️</a>
+                                <a href="{% url 'dashboard:product_edit' product.pk %}" class="btn btn-sm btn-primary" title="Редактировать">✏️</a>
+                                <a href="{% url 'dashboard:product_delete' product.pk %}" class="btn btn-sm btn-danger" title="Удалить" onclick="return confirm('Вы уверены, что хотите удалить этот продукт?')">🗑️</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div style="font-size: 64px; margin-bottom: 24px;">📦</div>
+            <h2>Продукты не найдены</h2>
+            <p class="text-secondary mb-3">Попробуйте изменить параметры поиска</p>
+            <a href="{% url 'dashboard:product_create' %}" class="btn btn-primary">Добавить первый продукт</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.filter-input,
+.filter-select {
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: var(--font-main);
+    transition: var(--transition);
+    background: white;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(82, 160, 47, 0.1);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin: 2px;
+}
+
+.status-available {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-unavailable {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.status-new {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.status-featured {
+    background: #fff8e1;
+    color: #f57c00;
+}
+
+.status-organic {
+    background: #f1f8e9;
+    color: #558b2f;
+}
+
+.btn-danger {
+    background: var(--color-danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c62828;
+}
+
+.text-warning {
+    color: #f57c00;
+    font-weight: 600;
+}
+
+.text-danger {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.table {
+    background: white;
+}
+
+.table thead th {
+    background: var(--color-hover);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-secondary);
+    padding: 12px;
+}
+
+.table tbody td {
+    padding: 16px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.table tbody tr:hover {
+    background: var(--color-hover);
+}
+</style>
+{% endblock %}

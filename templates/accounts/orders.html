@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Мои заказы - FreshMarket{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">📦 История заказов</h1>
+
+    {% if orders %}
+        <div class="orders-list">
+            {% for order in orders %}
+                <div class="order-card">
+                    <div class="order-header">
+                        <div>
+                            <h3 style="margin: 0;">Заказ #{{ order.pk }}</h3>
+                            <p class="text-sm text-secondary" style="margin: 4px 0 0 0;">{{ order.created_at|date:"d.m.Y H:i" }}</p>
+                        </div>
+                        <div class="order-status">
+                            <span class="status-badge status-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="order-body">
+                        <!-- Товары в заказе -->
+                        <div class="order-items">
+                            {% for item in order.items.all %}
+                                <div class="order-item-row">
+                                    <span class="text-sm">{{ item.product.category.icon }} {{ item.product.name }}</span>
+                                    <span class="text-sm text-secondary">{{ item.quantity }} × {{ item.price|floatformat:0 }} ₽</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Адрес доставки -->
+                        <div class="order-info">
+                            <div class="info-row">
+                                <span class="text-sm text-secondary">📍 Адрес:</span>
+                                <span class="text-sm">{{ order.delivery_address }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="text-sm text-secondary">🕐 Время:</span>
+                                <span class="text-sm">{{ order.delivery_time }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="text-sm text-secondary">💳 Оплата:</span>
+                                <span class="text-sm">{{ order.get_payment_method_display }}</span>
+                            </div>
+                            {% if order.manager %}
+                                <div class="info-row">
+                                    <span class="text-sm text-secondary">👤 Менеджер:</span>
+                                    <span class="text-sm">{{ order.manager.get_full_name }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="order-footer">
+                        <div class="order-total">
+                            <span class="text-secondary">Итого:</span>
+                            <strong style="font-size: 20px; color: var(--color-accent);">{{ order.final_total|floatformat:0 }} ₽</strong>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div style="font-size: 80px; margin-bottom: 24px;">📦</div>
+            <h2 class="mb-3">У вас пока нет заказов</h2>
+            <p class="text-secondary mb-4">Оформите свой первый заказ из каталога свежих продуктов</p>
+            <a href="{% url 'products:catalog' %}" class="btn btn-primary">Перейти в каталог</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.order-card {
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-background);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-hover);
+}
+
+.order-status {
+    display: flex;
+    gap: 8px;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: #fff8e1;
+    color: #f57c00;
+}
+
+.status-confirmed {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-preparing {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.status-delivering {
+    background: #e1f5fe;
+    color: #0288d1;
+}
+
+.status-completed {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-cancelled {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.order-body {
+    padding: 20px;
+}
+
+.order-items {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.order-item-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.order-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-footer {
+    padding: 20px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-hover);
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+</style>
+{% endblock %}

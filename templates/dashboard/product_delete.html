@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Удалить продукт - Панель управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <div class="mb-3">
+            <a href="{% url 'dashboard:products_list' %}" class="text-secondary">← Назад к списку продуктов</a>
+        </div>
+
+        <div class="card">
+            <div class="card-body text-center">
+                <div style="font-size: 64px; margin-bottom: 24px;">⚠️</div>
+
+                <h1 class="mb-3">Удалить продукт?</h1>
+
+                <div class="mb-4" style="background: var(--color-hover); padding: 20px; border-radius: 12px;">
+                    {% if product.main_image %}
+                        <img src="{{ product.main_image.image.url }}" alt="{{ product.name }}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">
+                    {% endif %}
+
+                    <h3 class="mb-2">{{ product.category.icon }} {{ product.name }}</h3>
+                    <p class="text-secondary mb-1">{{ product.quantity|floatformat:0 }} {{ product.get_unit_display }}</p>
+                    <p class="text-secondary mb-0">Цена: {{ product.price|floatformat:0 }} ₽</p>
+                </div>
+
+                <p class="text-secondary mb-4">
+                    Это действие нельзя отменить. Продукт будет удален навсегда.
+                </p>
+
+                <form method="post" style="display: inline-block;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" style="padding: 12px 32px;">
+                        Да, удалить продукт
+                    </button>
+                </form>
+
+                <a href="{% url 'dashboard:products_list' %}" class="btn" style="padding: 12px 32px; margin-left: 12px;">
+                    Отмена
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-danger {
+    background: var(--color-danger);
+    color: white;
+    border: 2px solid var(--color-danger);
+}
+
+.btn-danger:hover {
+    background: #c62828;
+    border-color: #c62828;
+}
+</style>
+{% endblock %}

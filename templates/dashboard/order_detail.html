@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказ #{{ order.pk }} - Панель управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-3">
+        <a href="{% url 'dashboard:orders_list' %}" class="text-secondary">← Назад к списку заказов</a>
+    </div>
+
+    <h1 class="mb-4">Заказ #{{ order.pk }}</h1>
+
+    <div class="grid grid-2" style="gap: 48px;">
+        <!-- Информация о заказе -->
+        <div>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">Информация о заказе</h3>
+
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Дата создания</p>
+                            <p><strong>{{ order.created_at|date:"d.m.Y H:i" }}</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Статус</p>
+                            <p><strong>{{ order.get_status_display }}</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Товары в заказе</p>
+                            <div style="margin-top: 8px;">
+                                {% for item in order.items.all %}
+                                    <div style="padding: 8px 0; border-bottom: 1px solid var(--color-border);">
+                                        <div class="d-flex justify-content-between">
+                                            <span>{{ item.product.category.icon }} {{ item.product.name }}</span>
+                                            <span class="text-secondary">{{ item.quantity }} × {{ item.price|floatformat:0 }} ₽</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Сумма товаров</p>
+                            <p><strong>{{ order.total_price|floatformat:0 }} ₽</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Доставка</p>
+                            <p><strong>{{ order.delivery_price|floatformat:0 }} ₽</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Итого к оплате</p>
+                            <p><strong style="font-size: 20px; color: var(--color-accent);">{{ order.final_total|floatformat:0 }} ₽</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Способ оплаты</p>
+                            <p>{{ order.get_payment_method_display }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">Информация о клиенте</h3>
+
+                    <div style="display: grid; gap: 12px;">
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Пользователь</p>
+                            <p><strong>{{ order.user.get_full_name }}</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Email</p>
+                            <p><strong>{{ order.email }}</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Телефон</p>
+                            <p><strong>{{ order.phone }}</strong></p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Адрес доставки</p>
+                            <p>{{ order.delivery_address }}</p>
+                            {% if order.entrance or order.floor or order.apartment %}
+                                <p class="text-sm text-secondary">
+                                    {% if order.entrance %}Подъезд {{ order.entrance }}{% endif %}
+                                    {% if order.floor %}, этаж {{ order.floor }}{% endif %}
+                                    {% if order.apartment %}, кв./оф. {{ order.apartment }}{% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-secondary mb-1">Время доставки</p>
+                            <p>{{ order.delivery_time }}</p>
+                        </div>
+
+                        {% if order.message %}
+                            <div>
+                                <p class="text-sm text-secondary mb-1">Комментарий клиента</p>
+                                <p style="padding: 12px; background: var(--color-hover); border-left: 3px solid var(--color-accent);">{{ order.message }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- История статусов -->
+            {% if history %}
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="mb-3">История изменений</h3>
+
+                        <div style="display: grid; gap: 16px;">
+                            {% for item in history %}
+                                <div style="padding-bottom: 16px; border-bottom: 1px solid var(--color-border);">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong>{{ item.get_status_display }}</strong>
+                                        <span class="text-sm text-secondary">{{ item.created_at|date:"d.m.Y H:i" }}</span>
+                                    </div>
+                                    {% if item.changed_by %}
+                                        <p class="text-sm text-secondary mb-1">Изменил: {{ item.changed_by.get_full_name }}</p>
+                                    {% endif %}
+                                    {% if item.comment %}
+                                        <p class="text-sm">{{ item.comment }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Форма редактирования -->
+        <div>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="mb-3">Обновить заказ</h3>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label for="status" class="form-label">Статус *</label>
+                            <select name="status" id="status" class="form-control" required>
+                                <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Ожидает обработки</option>
+                                <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Подтвержден</option>
+                                <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Готовится</option>
+                                <option value="delivering" {% if order.status == 'delivering' %}selected{% endif %}>В доставке</option>
+                                <option value="completed" {% if order.status == 'completed' %}selected{% endif %}>Доставлен</option>
+                                <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Отменен</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manager_notes" class="form-label">Заметки менеджера</label>
+                            <textarea name="manager_notes" id="manager_notes" class="form-control" rows="4" placeholder="Добавьте заметки к заказу...">{{ order.manager_notes }}</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">Сохранить изменения</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

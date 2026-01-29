@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Добавление продукта - Панель управления{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-3">
+        <a href="{% url 'dashboard:products_list' %}" class="text-secondary">← Назад к списку продуктов</a>
+    </div>
+
+    <h1 class="mb-4">➕ Добавить новый продукт</h1>
+
+    <div style="max-width: 900px;">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">Основная информация</h3>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="category" class="form-label">Категория *</label>
+                            <select name="category" id="category" class="form-control" required>
+                                <option value="">Выберите категорию</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat.pk }}">{{ cat.icon }} {{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="name" class="form-label">Название продукта *</label>
+                            <input type="text" id="name" name="name" class="form-control" placeholder="Например: Молоко пастеризованное" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="brand" class="form-label">Производитель/Бренд</label>
+                            <input type="text" id="brand" name="brand" class="form-control" placeholder="Например: Простоквашино">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="country_origin" class="form-label">Страна происхождения</label>
+                            <input type="text" id="country_origin" name="country_origin" class="form-control" placeholder="Например: Россия">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">Цена и количество</h3>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="price" class="form-label">Цена (₽) *</label>
+                            <input type="number" id="price" name="price" class="form-control" placeholder="99.90" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="discount_percent" class="form-label">Скидка (%)</label>
+                            <input type="number" id="discount_percent" name="discount_percent" class="form-control" value="0" min="0" max="100">
+                            <small class="text-secondary">Если скидка > 0, цена будет перечеркнута</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="quantity" class="form-label">Количество/Вес *</label>
+                            <input type="number" id="quantity" name="quantity" class="form-control" placeholder="1" value="1" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="unit" class="form-label">Единица измерения *</label>
+                            <select name="unit" id="unit" class="form-control" required>
+                                <option value="pcs">шт</option>
+                                <option value="kg">кг</option>
+                                <option value="g">г</option>
+                                <option value="l">л</option>
+                                <option value="ml">мл</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="stock" class="form-label">Остаток на складе (шт) *</label>
+                            <input type="number" id="stock" name="stock" class="form-control" value="100" min="0" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">Описание и характеристики</h3>
+
+                    <div class="form-group">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea id="description" name="description" class="form-control" rows="3" placeholder="Краткое описание продукта"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ingredients" class="form-label">Состав</label>
+                        <textarea id="ingredients" name="ingredients" class="form-control" rows="3" placeholder="Список ингредиентов через запятую"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nutritional_value" class="form-label">Пищевая ценность</label>
+                        <textarea id="nutritional_value" name="nutritional_value" class="form-control" rows="3" placeholder="Калории, белки, жиры, углеводы на 100г"></textarea>
+                    </div>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="expiry_date" class="form-label">Срок годности</label>
+                            <input type="text" id="expiry_date" name="expiry_date" class="form-control" placeholder="Например: 12 месяцев">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="storage_conditions" class="form-label">Условия хранения</label>
+                            <input type="text" id="storage_conditions" name="storage_conditions" class="form-control" placeholder="Например: хранить в сухом месте">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="mb-3">Статусы и метки</h3>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="is_available" checked>
+                                <span>✅ В наличии</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="is_featured">
+                                <span>⭐ Рекомендуемый</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="is_new">
+                                <span>🆕 Новинка</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="is_organic">
+                                <span>🌱 Органический продукт</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">✅ Создать продукт</button>
+                <a href="{% url 'dashboard:products_list' %}" class="btn" style="padding: 12px 32px;">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
